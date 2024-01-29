@@ -913,6 +913,9 @@ sources = {
 		"hotspot_stub_constraint_test", # /* Sarel Fleishman,Documentation Location,Demo Location */
 		#"test_revert", # /* Sarel Fleishman,Documentation Location,Demo Location */
 	],
+	"pilot/samuel" : [
+		"bootcamp",
+	],
 	"pilot/scheck" : [
 		#"struct_frag",
 	],
