@@ -18,6 +18,7 @@
 #include <core/scoring/ScoreFunctionFactory.hh>
 #include <numeric/random/random.functions.hh>
 #include <protocols/moves/MonteCarlo.hh>
+#include <protocols/moves/PyMOLMover.hh>
 
 int main( int argc, char ** argv ) {
         // Parse arguments
@@ -39,8 +40,10 @@ int main( int argc, char ** argv ) {
                 auto mc = protocols::moves::MonteCarlo(*mypose, *sfxn, numeric::random::uniform());
                 auto probability = numeric::random::gaussian();
                 auto uniform_random_number = numeric::random::uniform();
-                
-                for (core::Size i = 0; i < 1000; i++) {
+                // Initialize observer.
+                protocols::moves::PyMOLObserverOP the_observer = protocols::moves::AddPyMOLObserver( *mypose, true, 0 );
+                the_observer->pymol().apply( *mypose);
+                for (core::Size i = 0; i < 100; i++) {
                         // Initialize random values.
                         core::Size rand_res = uniform_random_number * (mypose->size() / mypose->total_residue()) + 1;
                         core::Real pert1 = numeric::random::uniform() * 360 - 180;
