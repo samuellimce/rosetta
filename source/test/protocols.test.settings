@@ -79,6 +79,10 @@ sources = {
 		"BackrubProtocolTests",
 	],
 
+	"bootcamp" : [
+		"QueueTests",
+	],
+
 	"branch_angle" : [
 		"BranchAngleOptimizer",
 	],
