@@ -8,6 +8,7 @@
 // (c) addressed to University of Washington UW TechTransfer, email: license@u.washington.edu.
 
 #include <iostream>
+#include <utility/vector1.hh>
 #include <basic/options/option.hh>
 #include <basic/options/keys/in.OptionKeys.gen.hh>
 #include <devel/init.hh>
@@ -19,6 +20,12 @@
 #include <numeric/random/random.functions.hh>
 #include <protocols/moves/MonteCarlo.hh>
 #include <protocols/moves/PyMOLMover.hh>
+#include <core/pack/task/PackerTask.hh>
+#include <core/pack/task/TaskFactory.hh>
+#include <core/pack/pack_rotamers.hh>
+#include <core/kinematics/MoveMap.hh>
+#include <core/optimization/MinimizerOptions.hh>
+#include <core/optimization/AtomTreeMinimizer.hh>
 
 int main( int argc, char ** argv ) {
         // Parse arguments
@@ -42,17 +49,23 @@ int main( int argc, char ** argv ) {
                 auto uniform_random_number = numeric::random::uniform();
                 // Initialize observer.
                 protocols::moves::PyMOLObserverOP the_observer = protocols::moves::AddPyMOLObserver( *mypose, true, 0 );
-                the_observer->pymol().apply( *mypose);
-                for (core::Size i = 0; i < 100; i++) {
+                the_observer->pymol().apply( *mypose );
+                // Declare variables.
+                core::Size rand_res;
+                core::Real pert1, pert2;
+                core::Real orig_phi, orig_psi;
+                core::pose::Pose copy_pose;
+                // Ten MC iterations.
+                for (core::Size i = 0; i < 10; i++) {
                         // Initialize random values.
-                        core::Size rand_res = uniform_random_number * (mypose->size() / mypose->total_residue()) + 1;
-                        core::Real pert1 = numeric::random::uniform() * 360 - 180;
-                        core::Real pert2 = numeric::random::uniform() * 360 - 180;
+                        rand_res = uniform_random_number * (mypose->size() / mypose->total_residue()) + 1;
+                        pert1 = numeric::random::uniform() * 360 - 180;
+                        pert2 = numeric::random::uniform() * 360 - 180;
 
                         std::cout << pert1 << " " << pert2 << std::endl;
                         // Store angles.
-                        core::Real orig_phi = mypose->phi( rand_res );
-                        core::Real orig_psi = mypose->psi( rand_res );
+                        orig_phi = mypose->phi( rand_res );
+                        orig_psi = mypose->psi( rand_res );
 
                         std::cout << orig_phi << " " << orig_psi << std::endl;
                         // Update angles.
@@ -60,6 +73,23 @@ int main( int argc, char ** argv ) {
                         mypose->set_psi( rand_res, orig_psi + pert2 );
 
                         std::cout << mypose->phi( rand_res ) << " " << mypose->psi( rand_res ) << std::endl;
+                        // Minimize and pack.
+                        // Pack first.
+                        core::pack::task::PackerTaskOP repack_task = core::pack::task::TaskFactory::create_packer_task( *mypose );
+                        repack_task->restrict_to_repacking();
+                        core::pack::pack_rotamers( *mypose, *sfxn, repack_task );
+                        // Minimize.
+                        core::kinematics::MoveMap mm;
+                        
+                        mm.set_bb( true );
+                        mm.set_chi( true );
+                        
+                        core::optimization::MinimizerOptions min_opts( "lbfgs_armijo_atol", 0.01, true );
+                        core::optimization::AtomTreeMinimizer atm;
+                        // Run minimization.
+                        copy_pose = *mypose;
+                        atm.run( copy_pose, mm, *sfxn, min_opts );
+                        *mypose = copy_pose;
                         // Metropolis.
                         if (mc.boltzmann(*mypose)) {
                                 std::cout << "Pose accepted." << std::endl;
