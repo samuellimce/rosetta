@@ -27,6 +27,9 @@
 #include <core/optimization/MinimizerOptions.hh>
 #include <core/optimization/AtomTreeMinimizer.hh>
 
+utility::vector1< std::pair< core::Size, core::Size > >
+identify_secondary_structure_spans( std::string const & secstruct_codes );
+
 int main( int argc, char ** argv ) {
         // Parse arguments
         devel::init( argc, argv );
@@ -44,7 +47,7 @@ int main( int argc, char ** argv ) {
                 core::Real score = sfxn->score( *mypose );
                 std::cout << "The score is " << score << std::endl;
                 // Monte Carlo starts here.
-                auto mc = protocols::moves::MonteCarlo(*mypose, *sfxn, numeric::random::uniform());
+                auto mc = protocols::moves::MonteCarlo(*mypose, *sfxn, 1);
                 auto probability = numeric::random::gaussian();
                 auto uniform_random_number = numeric::random::uniform();
                 // Initialize observer.
@@ -55,8 +58,11 @@ int main( int argc, char ** argv ) {
                 core::Real pert1, pert2;
                 core::Real orig_phi, orig_psi;
                 core::pose::Pose copy_pose;
+                core::kinematics::MoveMap mm;                        
+                mm.set_bb( true );
+                mm.set_chi( true );
                 // Ten MC iterations.
-                for (core::Size i = 0; i < 10; i++) {
+                for (core::Size i = 0; i < 100; i++) {
                         // Initialize random values.
                         rand_res = uniform_random_number * (mypose->size() / mypose->total_residue()) + 1;
                         pert1 = numeric::random::uniform() * 360 - 180;
@@ -79,11 +85,6 @@ int main( int argc, char ** argv ) {
                         repack_task->restrict_to_repacking();
                         core::pack::pack_rotamers( *mypose, *sfxn, repack_task );
                         // Minimize.
-                        core::kinematics::MoveMap mm;
-                        
-                        mm.set_bb( true );
-                        mm.set_chi( true );
-                        
                         core::optimization::MinimizerOptions min_opts( "lbfgs_armijo_atol", 0.01, true );
                         core::optimization::AtomTreeMinimizer atm;
                         // Run minimization.
@@ -96,6 +97,12 @@ int main( int argc, char ** argv ) {
                         } else {
                                 std::cout << "Pose rejected." << std::endl;
                         }
+
+                        if (i % 10 == 0) {
+                                mc.show_counters();
+                        }
+
+
 
                         std::cout << mypose->phi( rand_res ) << " " << mypose->psi( rand_res ) << std::endl;
 
