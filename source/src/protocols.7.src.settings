@@ -104,6 +104,9 @@ sources = {
 		"DisableCDRsOperation",
 		"RestrictToCDRsAndNeighbors",
 	],
+	"protocols/bootcamp": [
+		"fold_tree_from_ss",
+	],
 	"protocols/chemically_conjugated_docking": [
 		"Gp_extra_bodies",
 		"Gp_quantification_metrics",
