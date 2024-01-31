@@ -1,0 +1,28 @@
+<ROSETTASCRIPTS>
+    <RESIDUE_SELECTORS>
+        <Index name="aHelix" resnums="23-34"/>
+        <Not name="NotaHelix" selector="aHelix"/>
+    </RESIDUE_SELECTORS>
+	<TASKOPERATIONS>
+    <RestrictToRepacking name="rtrp"/>
+    <OperateOnResidueSubset name="PackaHelix" selector="aHelix">
+	    <RestrictToRepackingRLT/>
+    </OperateOnResidueSubset>
+    <OperateOnResidueSubset name="DontPacktheRest" selector="NotaHelix">
+    	<PreventRepackingRLT/>
+    </OperateOnResidueSubset>
+	</TASKOPERATIONS>
+	<FILTERS>
+	</FILTERS>
+	<MOVERS>
+        <MinMover name="min_mover"
+        bb="1" chi="1" jump="0" tolerance="0.0001"/>
+        <Small name="small_mover"
+        temperature="2.0" nmoves="100" angle_max="10.0" />
+        <PackRotamersMover name="pack_rot"
+        task_operations="rtrp"/>
+	</MOVERS>
+	<PROTOCOLS>
+        <Add mover_name="min_mover"/>
+	</PROTOCOLS>
+</ROSETTASCRIPTS>
