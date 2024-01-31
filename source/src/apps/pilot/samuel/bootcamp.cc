@@ -26,6 +26,9 @@
 #include <core/kinematics/MoveMap.hh>
 #include <core/optimization/MinimizerOptions.hh>
 #include <core/optimization/AtomTreeMinimizer.hh>
+#include <protocols/bootcamp/fold_tree_from_ss.hh>
+#include <core/scoring/dssp/Dssp.hh>
+#include <core/pose/variant_util.hh>
 
 utility::vector1< std::pair< core::Size, core::Size > >
 identify_secondary_structure_spans( std::string const & secstruct_codes );
@@ -46,6 +49,12 @@ int main( int argc, char ** argv ) {
                 auto sfxn = core::scoring::get_score_function();
                 core::Real score = sfxn->score( *mypose );
                 std::cout << "The score is " << score << std::endl;
+                // Change score function to penalize bad geometries.
+                sfxn->set_weight(core::scoring::linear_chainbreak, 1);
+                
+                // Update fold tree settings before MC iterations.
+                core::pose::correctly_add_cutpoint_variants(*mypose);
+                mypose->fold_tree(protocols::bootcamp::fold_tree_from_ss(*mypose));
                 // Monte Carlo starts here.
                 auto mc = protocols::moves::MonteCarlo(*mypose, *sfxn, 1);
                 auto probability = numeric::random::gaussian();
@@ -61,8 +70,8 @@ int main( int argc, char ** argv ) {
                 core::kinematics::MoveMap mm;                        
                 mm.set_bb( true );
                 mm.set_chi( true );
-                // Ten MC iterations.
-                for (core::Size i = 0; i < 100; i++) {
+                // MC iterations.
+                for (core::Size i = 0; i < 10; i++) {
                         // Initialize random values.
                         rand_res = uniform_random_number * (mypose->size() / mypose->total_residue()) + 1;
                         pert1 = numeric::random::uniform() * 360 - 180;
@@ -98,7 +107,7 @@ int main( int argc, char ** argv ) {
                                 std::cout << "Pose rejected." << std::endl;
                         }
 
-                        if (i % 10 == 0) {
+                        if (i % 10 == 9) {
                                 mc.show_counters();
                         }
 
