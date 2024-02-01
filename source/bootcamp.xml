@@ -1,0 +1,12 @@
+<ROSETTASCRIPTS>
+	<TASKOPERATIONS>
+	</TASKOPERATIONS>
+	<FILTERS>
+	</FILTERS>
+	<MOVERS>
+        <BootCampMover name="bcm" niterations="10"/>
+	</MOVERS>
+	<PROTOCOLS>
+        <Add mover_name="bcm"/>
+	</PROTOCOLS>
+</ROSETTASCRIPTS>

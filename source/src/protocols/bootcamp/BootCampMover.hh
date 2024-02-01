@@ -113,6 +113,20 @@ public:
 	std::string
 	get_name() const override;
 
+	core::scoring::ScoreFunctionOP
+	get_score_function() const;
+
+	core::Size
+	get_num_iterations() const;
+
+	void
+	set_score_function(core::scoring::ScoreFunctionOP&);
+
+	void
+	set_num_iterations(core::Size);
+
+
+
 	static
 	std::string
 	mover_name();
@@ -129,6 +143,8 @@ public: //Function overrides needed for the citation manager:
 private: // methods
 
 private: // data
+core::scoring::ScoreFunctionOP sfxn_;
+core::Size num_iterations_;
 
 };
 

@@ -15,6 +15,9 @@
 #include <protocols/bootcamp/BootCampMover.hh>
 #include <protocols/bootcamp/BootCampMoverCreator.hh>
 
+#include <protocols/rosetta_scripts/util.hh>
+#include <protocols/moves/mover_schemas.hh>
+
 // Core headers
 #include <core/pose/Pose.hh>
 
@@ -42,7 +45,8 @@ namespace bootcamp {
 
 /// @brief Default constructor
 BootCampMover::BootCampMover():
-	protocols::moves::Mover( BootCampMover::mover_name() )
+	protocols::moves::Mover( BootCampMover::mover_name() ),
+	num_iterations_(0)
 {
 
 }
@@ -158,18 +162,32 @@ BootCampMover::show(std::ostream & output) const
 /// @brief parse XML tag (to use this Mover in Rosetta Scripts)
 void
 BootCampMover::parse_my_tag(
-	utility::tag::TagCOP ,
-	basic::datacache::DataMap&
+	utility::tag::TagCOP tag,
+	basic::datacache::DataMap& map
 ) {
+	if ( tag->hasOption("scorefxn") ) {
+		core::scoring::ScoreFunctionOP new_score_function( protocols::rosetta_scripts::parse_score_function( tag, map ) );
+		runtime_assert( new_score_function != nullptr );
+		set_score_function( new_score_function );
+	}
 
+	if ( tag->hasOption("niterations") ) {
+		auto n = tag->getOption<core::Size>("niterations");
+		runtime_assert( n > 0 );
+		set_num_iterations(n);
+	}
 }
+
 void BootCampMover::provide_xml_schema( utility::tag::XMLSchemaDefinition & xsd )
 {
 
 	using namespace utility::tag;
 	AttributeList attlist;
-
-	//here you should write code to describe the XML Schema for the class.  If it has only attributes, simply fill the probided AttributeList.
+	
+	protocols::rosetta_scripts::attributes_for_parse_score_function(attlist);
+	attlist
+	+ XMLSchemaAttribute("niterations", utility::tag::xsct_positive_integer, "Number of iterations.");
+	//here you should write code to describe the XML Schema for the class.  If it has only attributes, simply fill the provided AttributeList.
 
 	protocols::moves::xsd_type_definition_w_attributes( xsd, mover_name(), "A new example mover class for bootcamp", attlist );
 }
@@ -198,7 +216,21 @@ std::string BootCampMover::mover_name() {
 	return "BootCampMover";
 }
 
+core::scoring::ScoreFunctionOP BootCampMover::get_score_function() const {
+	return sfxn_;
+}
 
+core::Size BootCampMover::get_num_iterations() const {
+	return num_iterations_;
+}
+
+void BootCampMover::set_score_function(core::scoring::ScoreFunctionOP& sfxn) {
+	sfxn_ = sfxn;
+}
+
+void BootCampMover::set_num_iterations(core::Size n) {
+	num_iterations_ = n;
+}
 
 /////////////// Creator ///////////////
 
