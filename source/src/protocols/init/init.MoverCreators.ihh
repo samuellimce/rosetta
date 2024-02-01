@@ -57,6 +57,7 @@
 #include <protocols/backrub/BackrubMoverCreator.hh>
 #include <protocols/backrub/BackrubProtocolCreator.hh>
 #include <protocols/backrub/BackrubSidechainMoverCreator.hh>
+#include <protocols/bootcamp/BootCampMoverCreator.hh>
 
 
 // C //////////////////////////////////////////////////////////////////////////
