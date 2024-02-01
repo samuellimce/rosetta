@@ -7,12 +7,11 @@
 // (c) For more information, see http://www.rosettacommons.org. Questions about this can be
 // (c) addressed to University of Washington CoMotion, email: license@uw.edu.
 
-/// @file   protocols/bootcamp/fold_tree_from_ss.hh
+/// @file   protocols/bootcamp/FoldTreeFromSS.hh
 /// @brief  Implementations for the FoldTree bootcamp example.
 /// @author Samuel Lim (lim@ku.edu)
 
-#include <protocols/bootcamp/fold_tree_from_ss.hh>
-
+#include <protocols/bootcamp/FoldTreeFromSS.hh>
 
 
 utility::vector1< std::pair< core::Size, core::Size > >
@@ -47,14 +46,21 @@ protocols::bootcamp::identify_secondary_structure_spans( std::string const & ss_
   return ss_boundaries;
 }
 
-core::kinematics::FoldTree protocols::bootcamp::fold_tree_from_dssp_string(std::string const& str) {
-	auto spans = protocols::bootcamp::identify_secondary_structure_spans(str);
+protocols::bootcamp::FoldTreeFromSS::FoldTreeFromSS(std::string const &ssstring)
+{
+	loop_for_residue_ = utility::vector1<core::Size>(ssstring.length(), 0);
+	auto spans = protocols::bootcamp::identify_secondary_structure_spans(ssstring);
 	auto fold_tree = core::kinematics::FoldTree();
 
 	utility::vector1<std::pair<core::Size, core::Size> > neg_spans;
 	for (core::Size i = 1; i < spans.size(); i++) {
         if (spans[i+1].first - spans[i].second < 2) continue;
 		neg_spans.push_back(std::pair<core::Size, core::Size>{spans[i].second + 1, spans[i+1].first - 1});
+		loop_vector_.push_back(protocols::loops::Loop(neg_spans.back().first, neg_spans.back().second, (neg_spans.back().first + neg_spans.back().second) / 2));
+		for (core::Size range = neg_spans.back().first; range <= neg_spans.back().second; range++) {
+			loop_for_residue_[range] = loop_vector_.size();
+		}
+
 	}
 	// Add jumps to every other span
 	core::Size jump_id = 1;
@@ -76,17 +82,33 @@ core::kinematics::FoldTree protocols::bootcamp::fold_tree_from_dssp_string(std::
 		fold_tree.add_edge((spans[l].first + spans[l].second) / 2, spans[l].first, core::kinematics::Edge::PEPTIDE);
 	}
 	fold_tree.add_edge((spans.back().first + spans.back().second) / 2, spans.back().first, core::kinematics::Edge::PEPTIDE);
-	fold_tree.add_edge((spans.back().first + spans.back().second) / 2, str.length(), core::kinematics::Edge::PEPTIDE);
+	fold_tree.add_edge((spans.back().first + spans.back().second) / 2, ssstring.length(), core::kinematics::Edge::PEPTIDE);
 	// Add peptides to each gap
 	for (core::Size m = 1; m <= neg_spans.size(); m++) {
 		fold_tree.add_edge((neg_spans[m].first + neg_spans[m].second) / 2, neg_spans[m].second, core::kinematics::Edge::PEPTIDE);
 		fold_tree.add_edge((neg_spans[m].first + neg_spans[m].second) / 2, neg_spans[m].first, core::kinematics::Edge::PEPTIDE);
 	}
 
-	return fold_tree;
+	ft_ = fold_tree;
 }
 
-core::kinematics::FoldTree protocols::bootcamp::fold_tree_from_ss(core::pose::Pose & pose) {
-	auto ss = core::scoring::dssp::Dssp(pose);
-	return protocols::bootcamp::fold_tree_from_dssp_string(ss.get_dssp_secstruct());
+protocols::bootcamp::FoldTreeFromSS::FoldTreeFromSS(core::pose::Pose &pose)
+: FoldTreeFromSS(core::scoring::dssp::Dssp(pose).get_dssp_secstruct())
+{
+}
+core::kinematics::FoldTree const &protocols::bootcamp::FoldTreeFromSS::fold_tree() const
+{
+	return ft_;
+    // TODO: insert return statement here
+}
+
+protocols::loops::Loop const &protocols::bootcamp::FoldTreeFromSS::loop(core::Size index) const
+{
+	return loop_vector_[index];
+    // TODO: insert return statement here
+}
+
+core::Size protocols::bootcamp::FoldTreeFromSS::loop_for_residue(core::Size seqpos) const
+{
+    return loop_for_residue_[seqpos];
 }

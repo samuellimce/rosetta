@@ -4,7 +4,7 @@
 	<FILTERS>
 	</FILTERS>
 	<MOVERS>
-        <BootCampMover name="bcm" niterations="10"/>
+        <BootCampMover name="bcm" niterations="200"/>
 	</MOVERS>
 	<PROTOCOLS>
         <Add mover_name="bcm"/>

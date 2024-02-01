@@ -50,7 +50,7 @@
 #include <core/kinematics/MoveMap.hh>
 #include <core/optimization/MinimizerOptions.hh>
 #include <core/optimization/AtomTreeMinimizer.hh>
-#include <protocols/bootcamp/fold_tree_from_ss.hh>
+#include <protocols/bootcamp/FoldTreeFromSS.hh>
 #include <core/scoring/dssp/Dssp.hh>
 #include <core/pose/variant_util.hh>
 

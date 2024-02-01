@@ -17,6 +17,7 @@
 
 #include <protocols/rosetta_scripts/util.hh>
 #include <protocols/moves/mover_schemas.hh>
+#include <protocols/loops/loop_closure/ccd/CCDLoopClosureMover.hh>
 
 // Core headers
 #include <core/pose/Pose.hh>
@@ -78,7 +79,8 @@ BootCampMover::apply( core::pose::Pose& mypose ){
                 
                 // Update fold tree settings before MC iterations.
                 core::pose::correctly_add_cutpoint_variants(mypose);
-                mypose.fold_tree(protocols::bootcamp::fold_tree_from_ss(mypose));
+                auto ftfss = protocols::bootcamp::FoldTreeFromSS(mypose);
+                mypose.fold_tree(ftfss.fold_tree());
                 // Monte Carlo starts here.
                 auto mc = protocols::moves::MonteCarlo(mypose, *sfxn, 1);
                 auto probability = numeric::random::gaussian();
@@ -91,11 +93,11 @@ BootCampMover::apply( core::pose::Pose& mypose ){
                 core::Real pert1, pert2;
                 core::Real orig_phi, orig_psi;
                 core::pose::Pose copy_pose;
-                core::kinematics::MoveMap mm;                        
-                mm.set_bb( true );
-                mm.set_chi( true );
+                core::kinematics::MoveMapOP mm_op(new core::kinematics::MoveMap);                        
+                mm_op->set_bb( true );
+                mm_op->set_chi( true );
                 // MC iterations.
-                for (core::Size i = 0; i < 10; i++) {
+                for (core::Size i = 0; i < num_iterations_; i++) {
                         // Initialize random values.
                         rand_res = uniform_random_number * (mypose.size() / mypose.total_residue()) + 1;
                         pert1 = numeric::random::uniform() * 360 - 180;
@@ -117,12 +119,21 @@ BootCampMover::apply( core::pose::Pose& mypose ){
                         core::pack::task::PackerTaskOP repack_task = core::pack::task::TaskFactory::create_packer_task( mypose );
                         repack_task->restrict_to_repacking();
                         core::pack::pack_rotamers( mypose, *sfxn, repack_task );
+
+                        if ( ftfss.loop_for_residue( rand_res ) != 0 ) {
+                                protocols::loops::Loop ranloop = ftfss.loop( ftfss.loop_for_residue( rand_res ));
+                                std::cout << "Closing loop: " << ranloop.start() << " " << ranloop.stop()
+                                << " " << ranloop.cut() << std::endl;
+                                protocols::loops::loop_closure::ccd::CCDLoopClosureMover ccd(
+                                ranloop, mm_op);
+                                ccd.apply( mypose );
+                        }
                         // Minimize.
                         core::optimization::MinimizerOptions min_opts( "lbfgs_armijo_atol", 0.01, true );
                         core::optimization::AtomTreeMinimizer atm;
                         // Run minimization.
                         copy_pose = mypose;
-                        atm.run( copy_pose, mm, *sfxn, min_opts );
+                        atm.run( copy_pose, *mm_op, *sfxn, min_opts );
                         mypose = copy_pose;
                         // Metropolis.
                         if (mc.boltzmann(mypose)) {

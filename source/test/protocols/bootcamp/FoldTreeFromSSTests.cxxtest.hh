@@ -27,7 +27,7 @@
 #include <core/types.hh>
 #include <core/scoring/dssp/Dssp.hh>
 #include <core/kinematics/FoldTree.hh>
-#include <protocols/bootcamp/fold_tree_from_ss.hh>
+#include <protocols/bootcamp/FoldTreeFromSS.hh>
 
 // C++ headers
 
@@ -82,7 +82,7 @@ public:
 
 	void test_fold_tree_from_dssp_string() {
 		auto input_str = "   EEEEEEE    EEEEEEE         EEEEEEEEE    EEEEEEEEEE   HHHHHH         EEEEEEEEE         EEEEE     ";
-		auto results = protocols::bootcamp::fold_tree_from_dssp_string(input_str);
+		auto results = protocols::bootcamp::FoldTreeFromSS(input_str).fold_tree();
 		
 		results.show(std::cout);
 
@@ -91,7 +91,7 @@ public:
 
 	void test_example_pdb_pose() {
 		core::pose::Pose pose = create_test_in_pdb_pose();
-		pose.fold_tree(protocols::bootcamp::fold_tree_from_ss(pose));
+		pose.fold_tree(protocols::bootcamp::FoldTreeFromSS(pose).fold_tree());
 		TS_ASSERT(pose.fold_tree().check_fold_tree());
 	}
 
