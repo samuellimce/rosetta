@@ -1,0 +1,13 @@
+<ROSETTASCRIPTS>
+	<SCOREFXNS>
+	</SCOREFXNS>
+	<SIMPLE_METRICS>
+        <PerResidueBfactorMetric name="per_bfactor" atom_type="CA" />
+	</SIMPLE_METRICS>
+	<MOVERS>
+		<RunSimpleMetrics name="run_metrics1" metrics="per_bfactor" prefix="m1_" />
+	</MOVERS>
+	<PROTOCOLS>
+		<Add mover_name="run_metrics1" />
+	</PROTOCOLS>
+</ROSETTASCRIPTS>

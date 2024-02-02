@@ -64,3 +64,4 @@
 
 #include <protocols/ptm_prediction/PTMPredictionMetricCreator.hh> // Added by ME, 8 December 2022.
 
+#include <protocols/bootcamp/PerResidueBfactorMetricCreator.hh>

@@ -17,6 +17,9 @@ sources = {
 		"register3",
 		"register4",
 	],
+	"protocols/bootcamp": [
+		"PerResidueBfactorMetric",
+	],
 }
 include_path = [
 ]

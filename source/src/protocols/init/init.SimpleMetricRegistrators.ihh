@@ -134,6 +134,8 @@ static SimpleMetricRegistrator< protocols::esm_perplexity::PerResidueEsmProbabil
 // Added by ME, 20 September 2023:
 static SimpleMetricRegistrator< protocols::inverse_folding::MIFSTProbabilitiesMetricCreator > reg_MIFSTProbabilitiesCreator;
 
+static SimpleMetricRegistrator< protocols::bootcamp::PerResidueBfactorMetricCreator > reg_PerResidueBfactorMetricCreator;
+
 // Added by ME, 8 December 2022:
 static SimpleMetricRegistrator< protocols::ptm_prediction::PTMPredictionMetricCreator > reg_PTMPredictionMetricCreator;
 
